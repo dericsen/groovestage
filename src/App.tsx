@@ -9,6 +9,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { auth, signInWithGoogle, logout, db } from './lib/firebase';
 import { AuthProvider, useAuth } from './lib/AuthContext';
+import { AuthDialog } from './components/AuthDialog';
 import { GearListing, UserProfile, Chat, Message, FeedPost, BandGroup } from './types';
 import { seedMockData } from './lib/seed';
 import { 
@@ -20,8 +21,8 @@ import { cn, formatDate } from './lib/utils';
 
 // --- Components ---
 
-const Sidebar = ({ onViewChange, currentView }: { onViewChange: (v: string) => void, currentView: string }) => {
-  const { profile } = useAuth();
+const Sidebar = ({ onViewChange, currentView, onOpenAuth }: { onViewChange: (v: string) => void, currentView: string, onOpenAuth: () => void }) => {
+  const { profile, logout } = useAuth();
 
   const menuItems = [
     { id: 'market', icon: ShoppingBag, label: 'Gear Market' },
@@ -92,7 +93,7 @@ const Sidebar = ({ onViewChange, currentView }: { onViewChange: (v: string) => v
             </button>
           </div>
          ) : (
-          <button onClick={signInWithGoogle} className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black py-3.5 rounded-2xl transition-all uppercase tracking-tighter text-xs shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+          <button onClick={onOpenAuth} className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black py-3.5 rounded-2xl transition-all uppercase tracking-tighter text-xs shadow-[0_0_20px_rgba(16,185,129,0.2)]">
             Join Club
           </button>
         )}
@@ -750,7 +751,7 @@ const BandLinkView = ({ onCreateChat }: { onCreateChat: (partnerUid: string) => 
 
 // --- View: Real-Time Chat & Collaborative Messaging Engine ---
 
-const ChatsView = ({ activeChatId, onSelectChatId }: { activeChatId: string | null, onSelectChatId: (id: string | null) => void }) => {
+const ChatsView = ({ activeChatId, onSelectChatId, onOpenAuth }: { activeChatId: string | null, onSelectChatId: (id: string | null) => void, onOpenAuth: () => void }) => {
   const { user, profile } = useAuth();
   
   const [chatThreads, setChatThreads] = useState<Chat[]>([]);
@@ -829,7 +830,7 @@ const ChatsView = ({ activeChatId, onSelectChatId }: { activeChatId: string | nu
         <MessageSquare className="w-16 h-16 text-zinc-700" />
         <h3 className="text-2xl font-black italic uppercase text-white">Channel Offline</h3>
         <p className="text-zinc-500 max-w-sm">Please register or authenticate your profile to activate Live Messaging coordinates.</p>
-        <button onClick={signInWithGoogle} className="bg-emerald-500 text-black px-6 py-2.5 rounded-full font-black text-xs uppercase hover:bg-emerald-400">Join Club Network</button>
+        <button onClick={onOpenAuth} className="bg-emerald-500 text-black px-6 py-2.5 rounded-full font-black text-xs uppercase hover:bg-emerald-400">Join Club Network</button>
       </div>
     );
   }
@@ -1443,6 +1444,9 @@ function AppContent() {
   const [currentView, setCurrentView] = useState('market');
   const { user, profile, loading } = useAuth();
   
+  // Custom auth overlay state
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  
   // Custom dialogs/overlays target
   const [selectedGearId, setSelectedGearId] = useState<string | null>(null);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
@@ -1457,7 +1461,7 @@ function AppContent() {
 
   const handleSeed = async () => {
     if (!user) {
-      alert("Please log in using Google authentication to populate custom database seeds!");
+      setShowAuthModal(true);
       return;
     }
     try {
@@ -1480,7 +1484,7 @@ function AppContent() {
   // Launch or open DM chat with a player
   const handleCreateChat = async (partnerUid: string) => {
     if (!user) {
-      alert("Please authenticate using Google first in order to send signals!");
+      setShowAuthModal(true);
       return;
     }
 
@@ -1527,7 +1531,7 @@ function AppContent() {
 
   return (
     <div className="flex h-screen bg-black text-white font-sans overflow-hidden">
-      <Sidebar onViewChange={setCurrentView} currentView={currentView} />
+      <Sidebar onViewChange={setCurrentView} currentView={currentView} onOpenAuth={() => setShowAuthModal(true)} />
 
       <main className="flex-1 relative h-screen overflow-y-auto overflow-x-hidden scrollbar-hide bg-zinc-950">
         <AnimatePresence mode="wait">
@@ -1542,7 +1546,7 @@ function AppContent() {
             {currentView === 'feed' && <FeedView onSelectGear={handleSelectGear} />}
             {currentView === 'market' && <MarketView onSelectGearId={handleSelectGear} />}
             {currentView === 'bandlink' && <BandLinkView onCreateChat={handleCreateChat} />}
-            {currentView === 'chats' && <ChatsView activeChatId={activeChatId} onSelectChatId={setActiveChatId} />}
+            {currentView === 'chats' && <ChatsView activeChatId={activeChatId} onSelectChatId={setActiveChatId} onOpenAuth={() => setShowAuthModal(true)} />}
             {currentView === 'profile' && <StudioView />}
           </motion.div>
         </AnimatePresence>
@@ -1555,6 +1559,13 @@ function AppContent() {
               onClose={() => setSelectedGearId(null)} 
               onDirectMessage={handleCreateChat}
             />
+          )}
+        </AnimatePresence>
+
+        {/* Global Built-In Auth Dialog Overlay */}
+        <AnimatePresence>
+          {showAuthModal && (
+            <AuthDialog onClose={() => setShowAuthModal(false)} />
           )}
         </AnimatePresence>
 
