@@ -9,7 +9,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { auth, signInWithGoogle, logout, db } from './lib/firebase';
 import { AuthProvider, useAuth } from './lib/AuthContext';
-import { AuthDialog } from './AuthDialog';
+import { AuthDialog } from './lib/AuthDialog';
 import { GearListing, UserProfile, Chat, Message, FeedPost, BandGroup } from './types';
 import { seedMockData } from './lib/seed';
 import { 
