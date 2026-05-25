@@ -1,0 +1,139 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information with musician skills",
+      "type": "object",
+      "properties": {
+        "username": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "bio": { "type": "string" },
+        "location": { "type": "string" },
+        "skills": { "type": "array", "items": { "type": "string" } },
+        "lookingFor": { "type": "array", "items": { "type": "string" } },
+        "userRole": { "type": "string", "enum": ["musician", "producer", "technician"] },
+        "role": { "type": "string", "enum": ["buyer", "seller", "admin"] },
+        "isVerified": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["username", "email"]
+    },
+    "FeedPost": {
+      "title": "FeedPost",
+      "description": "TikTok-style video post",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "username": { "type": "string" },
+        "userPhoto": { "type": "string" },
+        "videoUrl": { "type": "string" },
+        "caption": { "type": "string" },
+        "gearId": { "type": "string" },
+        "likesCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "videoUrl"]
+    },
+    "BandGroup": {
+      "title": "BandGroup",
+      "description": "A group of musicians",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "members": { "type": "array", "items": { "type": "string" } },
+        "location": { "type": "string" },
+        "genres": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "members"]
+    },
+    "Gear": {
+      "title": "Gear",
+      "description": "Musical instrument listing",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "condition": { "type": "string", "enum": ["New", "Like New", "Used", "Heavily Used"] },
+        "mainCategory": { "type": "string" },
+        "subCategory": { "type": "string" },
+        "subSubCategory": { "type": "string" },
+        "images": { "type": "array", "items": { "type": "string" } },
+        "videoUrl": { "type": "string" },
+        "sellerId": { "type": "string" },
+        "sellerName": { "type": "string" },
+        "sellerPhoto": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "sold", "reserved"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "price", "sellerId", "condition", "mainCategory", "subCategory"]
+    },
+    "Review": {
+      "title": "Review",
+      "description": "Seller review after transaction",
+      "type": "object",
+      "properties": {
+        "sellerId": { "type": "string" },
+        "buyerId": { "type": "string" },
+        "buyerName": { "type": "string" },
+        "productId": { "type": "string" },
+        "rating": { "type": "number" },
+        "comment": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["sellerId", "buyerId", "rating"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Chat message",
+      "type": "object",
+      "properties": {
+        "chatId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["chatId", "senderId", "text"]
+    },
+    "Chat": {
+      "title": "Chat",
+      "description": "Chat session metadata",
+      "type": "object",
+      "properties": {
+        "participants": { "type": "array", "items": { "type": "string" } },
+        "lastMessage": { "type": "string" },
+        "lastMessageAt": { "type": "string", "format": "date-time" },
+        "productId": { "type": "string" }
+      },
+      "required": ["participants"]
+    },
+    "MeetupRequest": {
+      "title": "MeetupRequest",
+      "description": "Request for a test or meetup",
+      "type": "object",
+      "properties": {
+        "productId": { "type": "string" },
+        "productTitle": { "type": "string" },
+        "buyerId": { "type": "string" },
+        "sellerId": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "accepted", "declined"] },
+        "message": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["productId", "buyerId", "sellerId"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": { "schema": "User", "description": "User profiles" },
+    "gears/{gearId}": { "schema": "Gear", "description": "Instrument listings" },
+    "feedPosts/{postId}": { "schema": "FeedPost", "description": "TikTok-style feed" },
+    "bandGroups/{groupId}": { "schema": "BandGroup", "description": "Band/Group entities" },
+    "chats/{chatId}": { "schema": "Chat", "description": "Chat metadata" },
+    "chats/{chatId}/messages/{messageId}": { "schema": "Message", "description": "Chat messages" }
+  }
+}

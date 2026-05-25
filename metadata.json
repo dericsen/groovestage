@@ -1,0 +1,14 @@
+{
+  "name": "GrooveStage",
+  "description": "An immersive music social platform featuring a TikTok-style discovery feed for musicians, gear marketplace, and a 'BandLink' directory to find collaborators and form groups in your city.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "AI-powered price suggestions",
+    "Real-time chat",
+    "Video demo support"
+  ]
+}

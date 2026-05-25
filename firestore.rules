@@ -1,0 +1,86 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- User Profiles ---
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(userId) && isValidUser(incoming());
+      allow update: if isOwner(userId) && isValidUser(incoming()) && (
+        incoming().diff(existing()).affectedKeys().hasOnly(['username', 'displayName', 'bio', 'location', 'skills', 'lookingFor', 'userRole', 'photoURL', 'role'])
+      );
+
+      function isValidUser(data) {
+        return data.username is string && data.username.size() >= 2;
+      }
+    }
+
+    // --- Feed Posts ---
+    match /feedPosts/{postId} {
+      allow read: if true;
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update: if isSignedIn() && (
+        isOwner(existing().userId) || 
+        incoming().diff(existing()).affectedKeys().hasOnly(['likesCount'])
+      );
+      allow delete: if isOwner(existing().userId);
+    }
+
+    // --- Band Groups ---
+    match /bandGroups/{groupId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (request.auth.uid in existing().members);
+      allow delete: if isSignedIn() && (request.auth.uid in existing().members);
+    }
+
+    // --- Gear Listings ---
+    match /gears/{gearId} {
+      allow read: if true;
+      allow create: if isSignedIn() && incoming().sellerId == request.auth.uid;
+      allow update: if isSignedIn() && (
+        isOwner(existing().sellerId) || 
+        (incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) && incoming().status == 'sold')
+      );
+      allow delete: if isOwner(existing().sellerId);
+    }
+
+    // --- Chats ---
+    match /chats/{chatId} {
+      allow read: if isSignedIn() && request.auth.uid in resource.data.participants;
+      allow create: if isSignedIn() && request.auth.uid in incoming().participants;
+      allow update: if isSignedIn() && request.auth.uid in existing().participants;
+
+      match /messages/{messageId} {
+        allow read: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+        allow create: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants && incoming().senderId == request.auth.uid;
+      }
+    }
+  }
+}
